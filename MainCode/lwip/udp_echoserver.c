@@ -21,6 +21,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "udp_echoserver.h"
+#include "generate_message.h"
+#include "allocator.h"
 #include <string.h>
 
 static struct udp_pcb *upcb  = NULL;

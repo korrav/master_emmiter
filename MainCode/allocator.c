@@ -1,6 +1,7 @@
 #include "emmiter.h"
 #include "allocator.h"
-#define NUM_BIG_BUFFER 4
+#include <string.h>
+#define NUM_BIG_BUFFER 8
 #define NUM_LITTLE_BUFFER 13
 
 static struct b_pool head_bb[NUM_BIG_BUFFER]; 

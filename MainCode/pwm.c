@@ -3,6 +3,7 @@
 #include "stm32f4xx_gpio.h"
 #include "stm32f4xx_dma.h"
 #include "stm32f4xx_tim.h"
+#include "signal.h"
 #include "pwm.h"
 
 #define TIM1_CCR2_ADDRESS    0x40010038
@@ -39,9 +40,7 @@ void pwm_Config() {
 	DMA_DeInit(DMA2_Stream2);
   DMA_InitStructure_TIM1.DMA_Channel = DMA_Channel_6;  
   DMA_InitStructure_TIM1.DMA_PeripheralBaseAddr = (uint32_t)(TIM1_CCR2_ADDRESS) ;
-  //DMA_InitStructure_TIM1.DMA_Memory0BaseAddr = (uint32_t)pwm_flash;
   DMA_InitStructure_TIM1.DMA_DIR = DMA_DIR_MemoryToPeripheral;
-  //DMA_InitStructure_TIM1.DMA_BufferSize = SIZE_PWM;
   DMA_InitStructure_TIM1.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
   DMA_InitStructure_TIM1.DMA_MemoryInc = DMA_MemoryInc_Enable;
   DMA_InitStructure_TIM1.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;
@@ -72,7 +71,6 @@ void pwm_Config() {
 	/* Time Base configuration */
   TIM_TimeBaseStructure.TIM_Prescaler = 0;
   TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-  //TIM_TimeBaseStructure.TIM_Period = Npwm_flash[0];
   TIM_TimeBaseStructure.TIM_ClockDivision = 0;
   TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
 	TIM_TimeBaseInit(TIM1, &TIM_TimeBaseStructure);
@@ -140,7 +138,8 @@ void pwm_Config() {
 void set_task_pwm(struct signal* psig) {
 	 DMA_SetCurrDataCounter(DMA2_Stream2, psig->num_sampl);
 	 DMA2_Stream2->M0AR = (uint32_t)psig->pbuf;
-	 TIM1->ARR = psig->arr;
+	 TIM1->ARR = psig->arr_pwm;
+	 TIM_PrescalerConfig(TIM1, psig->psc_pwm, TIM_PSCReloadMode_Update);
 	 /*Refill register TIM1CCR1*/
 	 TIM1->EGR |= 0x0001;
 	 return;

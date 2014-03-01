@@ -1,5 +1,19 @@
 #include "emmiter.h"
+#include "stm32f4x7_eth_bsp.h"
+#include "udp_echoserver.h"
+#include "allocator.h"
+#include "generate_message.h"
+#include "lwipopts.h"
+#include "netconf.h"
+#include "time.h"
+#include <stdio.h>
+#include "ptpd.h"
+#include "i2cExchange.h"
+#include "spiExchange.h"
+#include "ADC_control.h"
+#include "pwm.h"
 #include "signal.h"
+#include "ptpd.h"
 
 /*#define PLL_M_HSE      25
 #define PLL_N_HSE      336
@@ -155,7 +169,7 @@ void handl_command(struct b_pool* pbuf) {
 			h->dst = BAG;
 			h->src = MASTER;
 			h->count = LAST;
-			h->size = sizeof(struct head) + 3 * sizeof(int);
+			h->size = 3 * sizeof(int);
 			ans[0] = A_GET_ENABLE_DEBUG;
 			get_enable_Debug(&ans[1], &ans[2]);
 			transPackage(ptbuf, eth_write);
@@ -232,7 +246,7 @@ void debug_info(void) {
 		h->dst = BAG;
 		h->src = MASTER;
 		h->count = LAST;
-		h->size = sizeof(struct head) + sizeof(struct d_info);
+		h->size = sizeof(struct d_info);
 		ans->id = DEBUG_INFO;
 		d_time = 10 * debug.time + t;
 		__disable_irq();
@@ -270,15 +284,21 @@ void debug_info(void) {
 }
 
 void init_current_state(struct current_state* c) {
+	struct head_data_adc hdata;
 	c->id_sig = 0;
 	set_task_pwm(&pwm_sig[cur.id_sig]);
+	hdata.hash = cur.id_sig;
+	set_task_adc(&pwm_sig[cur.id_sig], &hdata);
 }
 
 void update_current(void) {
+	struct head_data_adc hdata;
 	//update signals
 	if(++cur.id_sig == NUM_PWM_SIG)
 		cur.id_sig = 0;
 	set_task_pwm(&pwm_sig[cur.id_sig]);
+	hdata.hash = cur.id_sig;
+	set_task_adc(&pwm_sig[cur.id_sig], &hdata);
 	
 }
 /*void clockHseInit(void) {

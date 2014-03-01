@@ -8,15 +8,9 @@
 #include "stm32f4xx_tim.h"
 #include "ADC_control.h"
 
+/*NOTE: CK_INT TIM3 = 84 MHz*/
 #define ADC_DR_ADDRESS ((uint32_t)0x4001204C)
-
-struct head_data_adc {
-	int sec;
-	int nsec;
-	int hash;
-};
-
-static int term_Reg;
+#define NUMBER_SAMPL_ADC 1400 //number of samples adc buffer
 
 static struct b_pool* pb_adc;
 
@@ -29,10 +23,6 @@ void ADC_config(void) {
 	ADC_CommonInitTypeDef  ADC_struct;
 	ADC_InitTypeDef ADC_InitStructure;	
 	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
-	struct head_data_adc adc_head = {0, 0, 0};
-	
-	pb_adc = alloc_buf(SIZE_BIG_BUFFER);
-	init_header_buffer_adc(pb_adc, 0, &adc_head);
 	
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2 | RCC_AHB1Periph_GPIOC | RCC_AHB1Periph_GPIOD, ENABLE);
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
@@ -40,9 +30,8 @@ void ADC_config(void) {
 	//CONFIGURE DMA FOR ADC
 	DMA_InitStructure_ADC.DMA_Channel = DMA_Channel_0;
 	DMA_InitStructure_ADC.DMA_PeripheralBaseAddr = ADC_DR_ADDRESS;
-	DMA_InitStructure_ADC.DMA_Memory0BaseAddr = (uint32_t)((char*) pb_adc->pbuf + sizeof(struct head) + sizeof(struct head_data_adc));
 	DMA_InitStructure_ADC.DMA_DIR = DMA_DIR_PeripheralToMemory;
-	DMA_InitStructure_ADC.DMA_BufferSize = term_Reg;
+	DMA_InitStructure_ADC.DMA_BufferSize = NUMBER_SAMPL_ADC;
 	DMA_InitStructure_ADC.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
 	DMA_InitStructure_ADC.DMA_MemoryInc = DMA_MemoryInc_Enable;
 	DMA_InitStructure_ADC.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;
@@ -56,7 +45,7 @@ void ADC_config(void) {
 	//enable DMA interrupt
 	DMA_ITConfig(DMA2_Stream0, DMA_IT_TC, ENABLE);
 	NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream0_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
   NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
@@ -90,7 +79,7 @@ void ADC_config(void) {
   ADC_Cmd(ADC1, ENABLE);
 	/*configure TIM3*/
 	TIM_TimeBaseStructInit(&TIM_TimeBaseStructure); 
-  TIM_TimeBaseStructure.TIM_Period = term_Reg;        
+  TIM_TimeBaseStructure.TIM_Period = 0;        
   TIM_TimeBaseStructure.TIM_Prescaler = 0;       
   TIM_TimeBaseStructure.TIM_ClockDivision = 0;    
   TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  
@@ -107,13 +96,6 @@ void ADC_config(void) {
   GPIO_InitSt_D.GPIO_Pin = GPIO_Pin_2;
   GPIO_Init(GPIOD, &GPIO_InitSt_D);
 	GPIO_PinAFConfig(GPIOD, GPIO_PinSource2, GPIO_AF_TIM3);
-	//enable interrupt trigger for TIM3
-	TIM_ITConfig(TIM3, TIM_IT_Trigger, ENABLE);
-	NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
-	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-	NVIC_Init(&NVIC_InitStructure);
 }
 
 void init_header_buffer_adc(struct b_pool* pbuf, int size, struct head_data_adc* phead) {
@@ -132,13 +114,28 @@ void init_header_buffer_adc(struct b_pool* pbuf, int size, struct head_data_adc*
 	return;
 }
 
-void inter_TIM3(void) {
-	if((TIM_GetFlagStatus(TIM3, TIM_FLAG_Trigger)) == SET)
-		TIM_ClearFlag(TIM3, TIM_FLAG_Trigger);
-	return;
-}
-
 void interDMA2_Stream0(void)
 {
-	DMA2->LIFCR |= DMA_LIFCR_CTCIF0;
+	TIM_Cmd(TIM3, DISABLE);
+	ADC_Cmd(ADC1, DISABLE);
+	DMA_Cmd(DMA2_Stream0, DISABLE);
+	while(DMA2_Stream0->CR & DMA_SxCR_EN);
+	DMA_ClearFlag(DMA2_Stream0, DMA_FLAG_TCIF0|DMA_FLAG_HTIF0|DMA_FLAG_TEIF0|DMA_FLAG_DMEIF0|DMA_FLAG_FEIF0);
+	enqueue_buf(pb_adc);
+	update_current();
+}
+
+void set_task_adc(struct signal* psig, struct head_data_adc* phadc) {
+	pb_adc = alloc_buf(SIZE_BIG_BUFFER);
+	init_header_buffer_adc(pb_adc, sizeof(struct head_data_adc) + SIZE_BIG_BUFFER * sizeof(uint16_t), phadc);
+	DMA_SetCurrDataCounter(DMA2_Stream0, NUMBER_SAMPL_ADC);
+	DMA2_Stream0->M0AR = (uint32_t)((char*) pb_adc->pbuf + sizeof(struct head) + sizeof(struct head_data_adc));
+	TIM3->ARR = psig->arr_adc;
+	TIM_PrescalerConfig(TIM3, psig->psc_adc, TIM_PSCReloadMode_Update);
+	/*Refill register TIM1CCR1*/
+	TIM3->EGR |= 0x0001;
+	DMA_Cmd(DMA2_Stream0, ENABLE);
+	ADC_Cmd(ADC1, ENABLE);	
+  ADC_DMACmd(ADC1, DISABLE);
+	ADC_DMACmd(ADC1, ENABLE);
 }

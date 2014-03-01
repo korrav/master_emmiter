@@ -36,7 +36,7 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-
+#include "ptpd.h"
 #include "lwip/mem.h"
 #include "netif/etharp.h"
 #include "ethernetif.h"

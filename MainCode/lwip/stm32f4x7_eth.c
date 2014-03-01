@@ -25,6 +25,7 @@
 #include "stm32f4xx_rcc.h"
 #include <string.h>
 #include "emmiter.h"
+#include "ptpd.h"
 
 /** @addtogroup STM32F4x7_ETH_Driver
   * @brief ETH driver modules
@@ -2374,7 +2375,7 @@ void PHY_DP83640_init(uint16_t PHYAddress) {
 	tmpreg |= PTP_ENABLE;
 	ETH_WritePHYRegister_p(PHYAddress, PTP_CTL_PAGE, PTP_CTL, tmpreg);
 	//configure trigger
-	tmpreg = (TRIG_DAC << TRIG_CSEL_SHIFT) | ((TRIG_DAC + 1)  << TRIG_GPIO_SHIFT) | TRIG_PULSE | TRIG_WR | TRIG_NOTIFY;
+	tmpreg = (TRIG_PWM << TRIG_CSEL_SHIFT) | ((TRIG_PWM + 1)  << TRIG_GPIO_SHIFT) | TRIG_PULSE | TRIG_WR | TRIG_NOTIFY;
 	ETH_WritePHYRegister_p(PHYAddress, PTP_TRIG_PAGE, PTP_TRIG, tmpreg );	//trigger DAC
 	tmpreg = (TRIG_ADC << TRIG_CSEL_SHIFT) | ((TRIG_ADC + 1)  << TRIG_GPIO_SHIFT) | TRIG_PULSE | TRIG_WR | TRIG_NOTIFY;
 	ETH_WritePHYRegister_p(PHYAddress, PTP_TRIG_PAGE, PTP_TRIG, tmpreg );	//trigger ADC
@@ -2547,7 +2548,7 @@ void PTPgetArmTrigger(uint16_t PHYAddress, uint32_t trig, uint32_t* sec, uint32_
 void PTPTriggerDisable(uint16_t PHYAddress) {
 	uint16_t tmpreg = 0;
 	tmpreg = ETH_ReadPHYRegister_p(PHYAddress, PTP_CTL_PAGE, PTP_CTL);
-	ETH_WritePHYRegister_p(PHYAddress, PTP_CTL_PAGE, PTP_CTL, tmpreg | (TRIG_DAC    << TRIG_SEL_SHIFT) | TRIG_DIS);
+	ETH_WritePHYRegister_p(PHYAddress, PTP_CTL_PAGE, PTP_CTL, tmpreg | (TRIG_PWM    << TRIG_SEL_SHIFT) | TRIG_DIS);
 	ETH_WritePHYRegister_p(PHYAddress, PTP_CTL_PAGE, PTP_CTL, tmpreg | (TRIG_ADC    << TRIG_SEL_SHIFT) | TRIG_DIS);
 	ETH_WritePHYRegister_p(PHYAddress, PTP_CTL_PAGE, PTP_CTL, tmpreg | (TRIG_ON_AMP << TRIG_SEL_SHIFT) | TRIG_DIS);
 	ETH_WritePHYRegister_p(PHYAddress, PTP_CTL_PAGE, PTP_CTL, tmpreg | (TRIG_OF_HYD << TRIG_SEL_SHIFT) | TRIG_DIS);

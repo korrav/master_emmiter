@@ -3,7 +3,7 @@
 #include "stm32f4xx.h"
 #include "stdio.h"
 
-#define SIZE_BIG_BUFFER 5000
+#define SIZE_BIG_BUFFER 3000
 #define SIZE_LITTLE_BUFFER 1500
 
 struct list_head {

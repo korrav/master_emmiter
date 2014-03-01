@@ -1,5 +1,6 @@
 #include "emmiter.h"
 #include "generate_message.h"
+#include <string.h>
 
 int generate_message(char *buf, struct receiver *rec) {
 	struct head* h = (struct head*)buf;

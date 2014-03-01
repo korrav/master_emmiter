@@ -34,6 +34,10 @@
 #include "stm32f4xx_tim.h"
 #include "pwm.h"
 #include "emmiter.h"
+#include "netconf.h"
+#include "spiExchange.h"
+#include "i2cExchange.h"
+#include "ADC_control.h"
 
 /** @addtogroup STM32F4xx_StdPeriph_Examples
   * @{
@@ -213,13 +217,9 @@ void I2C3_EV_IRQHandler(void) {
 	i2c_hand();
 }
 
-void TIM3_IRQHandler(void) {
-	inter_TIM3();
-	return;
-}
-
 void DMA2_Stream0_IRQHandler(void) {
 	interDMA2_Stream0();
+	DMA2->LIFCR |= DMA_LIFCR_CTCIF0;
 }
 
 void DMA2_Stream2_IRQHandler(void) {

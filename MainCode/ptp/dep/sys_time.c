@@ -27,7 +27,7 @@ void setTimeMeas(TimeInternal *t_DAC, uint32_t subtOnAmp, uint32_t w_subtOnAmp, 
 	tim_add.seconds = 0;
 	__disable_irq();
 	PTPTriggerDisable(DP83848_PHY_ADDRESS);
-	PTPArmTrigger(DP83848_PHY_ADDRESS, TRIG_DAC, (uint32_t)t_DAC->seconds, (uint32_t)t_DAC->nanoseconds, 2000000);
+	PTPArmTrigger(DP83848_PHY_ADDRESS, TRIG_PWM, (uint32_t)t_DAC->seconds, (uint32_t)t_DAC->nanoseconds, 2000000);
 	tim_add.nanoseconds = subtOnAmp;
 	subtime(t_DAC, &tim_add, &time);
 	PTPArmTrigger(DP83848_PHY_ADDRESS, TRIG_ON_AMP, (uint32_t)time.seconds, (uint32_t)time.nanoseconds, w_subtOnAmp);

@@ -1,21 +1,7 @@
 #ifndef __EMMITER
 #define __EMMITER
 #include "stm32f4xx.h"
-#include "stm32f4x7_eth_bsp.h"
-#include "udp_echoserver.h"
-#include "allocator.h"
-#include "generate_message.h"
-#include "lwipopts.h"
-#include "netconf.h"
-#include "time.h"
 #include <stdbool.h>
-#include <stdio.h>
-#include "ptpd.h"
-#include "i2cExchange.h"
-#include "spiExchange.h"
-#include "ADC_control.h"
-#include "pwm.h"
-#include "signal.h"
 
 enum srcdst { BAG = 1, INTERFACE = 2, MASTER = 4, SLAVE = 8};
 enum typ { DATA, COMMAND, ANSWER};
@@ -33,8 +19,8 @@ struct head{
 };
 
 //triggers numbers
-#define TRIG_DAC    0
-#define TRIG_ADC    2
+#define TRIG_PWM    3
+#define TRIG_ADC    1
 #define TRIG_ON_AMP 6
 #define TRIG_OF_HYD 7
 
