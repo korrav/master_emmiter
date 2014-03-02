@@ -60,6 +60,7 @@ void pwm_Config() {
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
 	//enable TIM1_UIF interrupt
+	TIM_ITConfig(TIM1, TIM_IT_Trigger, ENABLE);
 	NVIC_InitStructure.NVIC_IRQChannel = TIM1_UP_TIM10_IRQn;
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 4;
   NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
@@ -135,6 +136,10 @@ void pwm_Config() {
 	 return;
  }
  
+void inter_TIM1_start(void) {
+	set_cur_status_meas(RUN);
+	return;
+}
 void set_task_pwm(struct signal* psig) {
 	 DMA_SetCurrDataCounter(DMA2_Stream2, psig->num_sampl);
 	 DMA2_Stream2->M0AR = (uint32_t)psig->pbuf;

@@ -5,9 +5,10 @@
 
 enum srcdst { BAG = 1, INTERFACE = 2, MASTER = 4, SLAVE = 8};
 enum typ { DATA, COMMAND, ANSWER};
-enum id_command {ENABLE_DEBUG, GET_ENABLE_DEBUG, DISABLE_DEBUG};
+enum id_command {ENABLE_DEBUG, GET_ENABLE_DEBUG, DISABLE_DEBUG, STOP_MEAS, START_MEAS, SET_TIMINGS};
+enum status_answer{NOT_OK, OK};
 enum id_answer {A_GET_ENABLE_DEBUG, DEBUG_INFO};
-
+enum status_meas {RUN, STOP};
 //packet header format
 #define LAST -1
 struct head{
@@ -72,7 +73,9 @@ struct head{
 #define UDP_MODULE_PORT    3021   /* define the UDP local connection port */
 
 #define MII_MODE
-#define CHECKSUM_BY_HARDWARE  //checksum payoland ip4
+#define CHECKSUM_BY_HARDWARE  //checksum payoland ip4 
 
 void update_current(void); //update the current system status (current signal, timings, etc.)
+uint8_t get_cur_status_meas(void); //returns the status of the current measurement
+void set_cur_status_meas(uint8_t stat); //set the status of the current measurement
 #endif /* __EMMITER */

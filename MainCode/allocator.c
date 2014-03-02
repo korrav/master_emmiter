@@ -118,3 +118,10 @@ struct b_pool* increase_buf(struct b_pool* buffer) {
 	}
 	return b;
 }
+
+uint32_t check_buffer_is_free(struct b_pool* pbuf) {
+	uint32_t status = 0;
+	if(pbuf->status == FREE)
+		status =1;
+	return status;
+}

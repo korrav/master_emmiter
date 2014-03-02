@@ -228,6 +228,12 @@ void DMA2_Stream2_IRQHandler(void) {
 }
 
 void TIM1_UP_TIM10_IRQHandler(void) {
-	inter_TIM1_UP_TIM10();
-	TIM_ClearFlag(TIM1, TIM_FLAG_Update);
+	if (TIM_GetFlagStatus(TIM1, TIM_FLAG_Update) == SET) {
+		inter_TIM1_UP_TIM10();
+		TIM_ClearFlag(TIM1, TIM_FLAG_Update);
+	}else if(TIM_GetFlagStatus(TIM1, TIM_FLAG_Trigger) == SET) {
+		inter_TIM1_start();
+		TIM_ClearFlag(TIM1, TIM_FLAG_Trigger);
+	}
+	return;
 }

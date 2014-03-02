@@ -24,4 +24,5 @@ void free_buf (struct b_pool* buffer); //release of the buffer pool
 void enqueue_buf(struct b_pool* buffer);//put a buffer in the processing queue
 struct b_pool* increase_buf(struct b_pool* buffer); //exchange buffer to another, having a larger size while preserving the content
 struct b_pool* pull_out_queue(void); //extract from the head of the buffer queue
+uint32_t check_buffer_is_free(struct b_pool* pbuf); //check whether the buffer is free
 #endif /* __ALLOCATOR */

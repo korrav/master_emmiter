@@ -123,10 +123,12 @@ void interDMA2_Stream0(void)
 	DMA_ClearFlag(DMA2_Stream0, DMA_FLAG_TCIF0|DMA_FLAG_HTIF0|DMA_FLAG_TEIF0|DMA_FLAG_DMEIF0|DMA_FLAG_FEIF0);
 	enqueue_buf(pb_adc);
 	update_current();
+	set_cur_status_meas(STOP);
 }
 
 void set_task_adc(struct signal* psig, struct head_data_adc* phadc) {
-	pb_adc = alloc_buf(SIZE_BIG_BUFFER);
+	if(pb_adc == NULL || !check_buffer_is_free(pb_adc)) 
+		pb_adc = alloc_buf(SIZE_BIG_BUFFER);
 	init_header_buffer_adc(pb_adc, sizeof(struct head_data_adc) + SIZE_BIG_BUFFER * sizeof(uint16_t), phadc);
 	DMA_SetCurrDataCounter(DMA2_Stream0, NUMBER_SAMPL_ADC);
 	DMA2_Stream0->M0AR = (uint32_t)((char*) pb_adc->pbuf + sizeof(struct head) + sizeof(struct head_data_adc));
